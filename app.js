@@ -32,20 +32,20 @@ app.get('/', function(req,res){
 app.post('/login', function(req,res){
   req.assert("username", "You must enter a username!").notEmpty();
   req.assert("password", "You must enter a password!").notEmpty();
-
   req.getValidationResult().then(function(result) {
   // do something with the validation result
-  
-});
+    var errors = result;
+    res.render('login', {errors: errors});
+  });
   var username = req.body.username;
   var password = req.body.password;
   authenticate(req, username, password);
   if (req.session && req.session.authenticated){
     res.render('index', { username: username });
   } else {
-
-    res.redirect('/');
-}})
+    // var errors =
+    res.render('login');
+}});
 
 function authenticate(req, username, password){
   var authUser = User.userList.find(function (user) {
