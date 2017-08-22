@@ -10,7 +10,7 @@ const bodyParser = require('body-parser');
 const expressValidator = require('express-validator');
 
 app.engine('mustache', mustache());
-app.set('views', ['./views', './views/login']);
+app.set('views', ['./views', './views/login', './views/signup']);
 app.set('view engine', 'mustache');
 
 // app.use('/',loginRouter);
@@ -19,33 +19,61 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(expressValidator());
 
+app.set('trust proxy', 1) // trust first proxy
 app.use(session({
   secret: 'keyboard cat',
   resave: false,
   saveUninitialized: true
+  // cookie: { secure: true }
 }))
 
+var errors = [];
+var authErrors = "";
+var emptyErrors = "";
+var eErrors = "";
+
 app.get('/', function(req,res){
-  res.render('login');
+  //   // redirect to login if not already logged in
+  res.render('login', {error: errors});
+})
+
+app.get('/index', function(req, res) {
+//   // redirect to login if not already logged in
+//   var user = User.find()
+//   res.send(user);
+  res.redirect('/login')
+})
+
+app.get('/login', function(req,res){
+  res.render('login', {error: errors});
 })
 
 app.post('/login', function(req,res){
-  req.assert("username", "You must enter a username!").notEmpty();
-  req.assert("password", "You must enter a password!").notEmpty();
-  req.getValidationResult().then(function(result) {
-  // do something with the validation result
-    var errors = result;
-    res.render('login', {errors: errors});
-  });
+  errors = [];
   var username = req.body.username;
   var password = req.body.password;
-  authenticate(req, username, password);
-  if (req.session && req.session.authenticated){
-    res.render('index', { username: username });
-  } else {
-    // var errors =
-    res.render('login');
-}});
+  // checkEmpty(req, username, password);
+  console.log(User.getUser(username));
+  // console.log(User.find(username));
+  if(username===""){
+    errors.push("You must enter a username.")
+  }
+  console.log(User.getPass(password));
+  // console.log(User.find(password));
+  if(password===""){
+    errors.push("You must enter a password.")
+  }
+  if(username!=""&&password!=""){
+    authenticate(req, username, password);
+    if (req.session && req.session.authenticated){
+      res.render('index', { username: username });
+    } else {
+      errors.push("Unable to authenticate user.");
+      res.redirect('/');
+    }
+  }
+  else{res.redirect('/')};
+});
 
 function authenticate(req, username, password){
   var authUser = User.userList.find(function (user) {
@@ -53,19 +81,45 @@ function authenticate(req, username, password){
       req.session.authenticated = true;
       console.log('User & Password Authenticated');
     } else {
-      return false
+      // errors.push("Could not authenticate. ");
+      return authErrors
     }
   });
   console.log(req.session);
   return req.session;
 };
 
-// app.get('/', function(req, res) {
-//   // redirect to login if not already logged in
-//   // var user = User.find()
-//   // res.send(user);
-//   res.render('index')
-// })
+function checkEmpty(req, username, password){
+  req.checkBody("username", "You must enter a username!").notEmpty();
+  req.getValidationResult().then(function(result) {
+    console.log(req.xhr);
+    // do something with the validation result
+    emptyErrors = result.mapped();
+    console.log(emptyErrors);
+    console.log(" line 78");
+    if(emptyErrors != {}){
+      console.log(emptyErrors.username.msg+" line 80");
+      // return res.render('/', {errors: errors});
+      eErrors = emptyErrors.username.msg;
+      emptyErrors = {};
+    }
+    return eErrors;
+      // next();
+  });
+  req.checkBody("password", "You must enter a password!").notEmpty();
+  req.getValidationResult().then(function(result) {
+    console.log(result);
+    emptyErrors = result.mapped();
+    console.log(emptyErrors);
+    console.log(" line 92");
+    if(emptyErrors != {}){
+      console.log(emptyErrors.password.msg+" line 94");
+      // return res.render('/', {errors: errors});
+      eErrors = emptyErrors.password.msg;
+      emptyErrors = {};
+    }
+    return eErrors;
+})};
 
 // app.get('/login', function(req,res){
 //   res.render('login');
