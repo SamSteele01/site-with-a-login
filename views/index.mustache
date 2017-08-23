@@ -7,6 +7,10 @@
   <body>
     Index Page
     <h1>You have logged in as {{username}}</h1>
-    <p>Your login </p>
+    <p>Your login token is </p>
+      {{#token}}
+        {{token}}
+      {{/token}}
+    <p>you viewed this page {{views}} times</p>
   </body>
 </html>

@@ -15,7 +15,9 @@
       <input type="text" name="password" placeholder="Enter password..." value="">
       <button type="submit" name="button">Login</button>
       {{#error}}
-        {{error}}
+        <div class="">
+          <p>{{error}}</p>
+        </div>
       {{/error}}
     </form>
   </body>
